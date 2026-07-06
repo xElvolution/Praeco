@@ -19,7 +19,18 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
-  cacheComponents: true,
+  // Classic SSR semantics: pages reading from Neon/cookies are dynamic via
+  // `export const dynamic = "force-dynamic"`. Cache Components (experimental)
+  // forbids that, so it's off.
+  cacheComponents: false,
+  experimental: {
+    // Publishing sends the article body — which can carry inline base64 images —
+    // through a Server Action. The default 1MB cap would reject image-rich posts.
+    serverActions: { bodySizeLimit: "8mb" },
+  },
+  async redirects() {
+    return [{ source: "/how", destination: "/arena", permanent: true }];
+  },
 };
 
 export default nextConfig;

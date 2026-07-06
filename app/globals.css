@@ -1,50 +1,49 @@
 /**
- * Copyright 2026 Circle Internet Group, Inc.  All rights reserved.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- *
+ * Praeco — editorial antiquity theme. Bronze, patina, parchment, ink.
  * SPDX-License-Identifier: Apache-2.0
  */
-
 @import "tailwindcss";
 @import "tw-animate-css";
 
 :root {
-  --background: 0 0% 100%;
-  --foreground: 255 16.47% 33.33%;
-  --card: 0 0% 100%;
-  --card-foreground: 255 16.47% 33.33%;
-  --popover: 0 0% 100%;
-  --popover-foreground: 255 16.47% 33.33%;
-  --primary: 204.62 100% 38.24%;
-  --primary-foreground: 0 0% 100%;
-  --secondary: 210 100% 97.25%;
-  --secondary-foreground: 204.62 100% 38.24%;
-  --muted: 252 20% 95.1%;
-  --muted-foreground: 253.33 11.79% 44.9%;
-  --accent: 258 100% 96.08%;
-  --accent-foreground: 255 25.53% 18.43%;
-  --destructive: 353.92 83.15% 65.1%;
-  --destructive-foreground: 0 0% 100%;
-  --border: 253.33 16.36% 89.22%;
-  --input: 253.33 16.36% 89.22%;
-  --ring: 204.1 100% 55.1%;
-  --chart-1: 204.1 100% 55.1%;
-  --chart-2: 259.15 100% 72.35%;
-  --chart-3: 150.98 75.41% 47.84%;
-  --chart-4: 21.9 100% 73.14%;
-  --chart-5: 294.95 88.43% 76.27%;
-  --radius: 0.5rem;
+  /* Parchment & ink */
+  --background: 40 33% 95%;
+  --foreground: 28 18% 16%;
+  --card: 40 30% 97%;
+  --card-foreground: 28 18% 16%;
+  --popover: 40 30% 97%;
+  --popover-foreground: 28 18% 16%;
+
+  /* Bronze (primary) + patina (accent) */
+  --primary: 28 58% 40%;
+  --primary-foreground: 40 38% 96%;
+  --secondary: 40 24% 90%;
+  --secondary-foreground: 28 30% 24%;
+  --muted: 38 20% 89%;
+  --muted-foreground: 30 12% 42%;
+  --accent: 168 28% 38%;
+  --accent-foreground: 40 38% 96%;
+  --destructive: 8 62% 48%;
+  --destructive-foreground: 40 38% 96%;
+
+  --border: 34 18% 82%;
+  --input: 34 18% 82%;
+  --ring: 28 58% 40%;
+
+  --chart-1: 28 58% 42%;
+  --chart-2: 168 28% 38%;
+  --chart-3: 38 60% 50%;
+  --chart-4: 18 45% 45%;
+  --chart-5: 200 25% 40%;
+
+  --radius: 0.3rem;
+
+  /* Brand tokens */
+  --bronze: 28 58% 40%;
+  --bronze-bright: 36 62% 52%;
+  --patina: 168 28% 38%;
+  --ink: 28 18% 16%;
+  --parchment: 40 33% 95%;
 }
 
 @theme inline {
@@ -72,6 +71,16 @@
   --color-chart-3: hsl(var(--chart-3));
   --color-chart-4: hsl(var(--chart-4));
   --color-chart-5: hsl(var(--chart-5));
+  --color-bronze: hsl(var(--bronze));
+  --color-bronze-bright: hsl(var(--bronze-bright));
+  --color-patina: hsl(var(--patina));
+  --color-ink: hsl(var(--ink));
+  --color-parchment: hsl(var(--parchment));
+
+  --font-display: var(--font-fraunces), Georgia, serif;
+  --font-serif: var(--font-newsreader), Georgia, serif;
+  --font-mono: var(--font-mono-geist), ui-monospace, monospace;
+
   --radius-lg: var(--radius);
   --radius-md: calc(var(--radius) - 2px);
   --radius-sm: calc(var(--radius) - 4px);
@@ -82,6 +91,76 @@
     @apply border-border;
   }
   body {
-    @apply bg-background text-foreground;
+    @apply text-foreground;
+    font-family: var(--font-serif);
+    /* The fixed <Atmosphere/> backdrop (-z-10) provides the ancient scenery. */
+    background-color: transparent;
   }
+  h1, h2, h3, h4 {
+    font-family: var(--font-display);
+  }
+}
+
+@layer utilities {
+  /* Tiny uppercase mono label — the editorial caption style. */
+  .label-mono {
+    font-family: var(--font-mono);
+    text-transform: uppercase;
+    letter-spacing: 0.18em;
+    font-size: 0.7rem;
+    color: hsl(var(--muted-foreground));
+  }
+  /* Hairline rule used between editorial sections. */
+  .rule { border-top: 1px solid hsl(var(--border)); }
+  /* Subtle parchment grain via layered radial gradients. */
+  .parchment-grain {
+    background-image:
+      radial-gradient(hsl(28 18% 16% / 0.025) 1px, transparent 1px),
+      radial-gradient(hsl(28 18% 16% / 0.02) 1px, transparent 1px);
+    background-size: 18px 18px, 32px 32px;
+    background-position: 0 0, 8px 12px;
+  }
+  .text-balance { text-wrap: balance; }
+
+  /* Coin mint-flip — pure CSS so it always runs on load (no JS dependency). */
+  .animate-mint {
+    transform-style: preserve-3d;
+    animation: mint-flip 9s linear infinite;
+  }
+  @keyframes mint-flip {
+    to { transform: rotateY(360deg); }
+  }
+}
+
+/* ---- Themes (set via data-theme on <html>) ---- */
+html[data-theme="papyrus"] {
+  --background: 38 42% 91%;
+  --card: 40 46% 94%;
+  --secondary: 38 30% 86%;
+  --muted: 38 26% 85%;
+  --parchment: 38 42% 91%;
+}
+/* Dark themes: the light marble veining reads as a harsh grid, so fade it
+   right down and soften the decorative relief. */
+html[data-theme="night"] .atmo-veining { opacity: 0.03; }
+html[data-theme="night"] .atmo-relief { opacity: 0.05 !important; }
+
+html[data-theme="night"] {
+  --background: 28 14% 12%;
+  --foreground: 40 22% 88%;
+  --card: 28 14% 16%;
+  --card-foreground: 40 22% 88%;
+  --popover: 28 14% 16%;
+  --popover-foreground: 40 22% 88%;
+  --secondary: 28 12% 22%;
+  --secondary-foreground: 40 22% 88%;
+  --muted: 28 12% 22%;
+  --muted-foreground: 36 14% 64%;
+  --accent: 168 26% 50%;
+  --border: 30 12% 26%;
+  --input: 30 12% 26%;
+  --ring: 36 62% 55%;
+  --primary: 36 64% 56%;
+  --ink: 40 22% 88%;
+  --parchment: 28 14% 12%;
 }

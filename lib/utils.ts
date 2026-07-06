@@ -27,3 +27,18 @@ export function shortenHash(hash: string, chars = 4): string {
   if (hash.length <= chars * 2 + 2) return hash;
   return `${hash.slice(0, chars + 2)}...${hash.slice(-chars)}`;
 }
+
+export function formatNumber(
+  n: number,
+  opts: Intl.NumberFormatOptions = {},
+): string {
+  return new Intl.NumberFormat("en-US", opts).format(n);
+}
+
+/** Normalize Postgres date / ISO string to YYYY-MM-DD (UTC-safe for date-only values). */
+export function dateKey(d: string | Date | null | undefined): string | null {
+  if (!d) return null;
+  const s = d instanceof Date ? d.toISOString() : String(d);
+  const m = s.match(/^(\d{4}-\d{2}-\d{2})/);
+  return m ? m[1] : null;
+}

@@ -1,187 +1,90 @@
-# Arc Nanopayments Demo
+# Praeco
 
-Demonstrate gasless USDC nanopayments using [Circle Nanopayments](https://www.circle.com/nanopayments) on Arc. A **LangChain agent** acts as the buyer, autonomously paying for paywalled resources, while a **Next.js web app** acts as the seller, exposing x402-protected endpoints and providing a seller dashboard to monitor payments and withdraw earnings.
+**Paid by the read, not the month.** A publishing platform where a single article sells for a cent, paid instantly in USDC on Arc — settled straight to the writer, with no subscription and no floor.
 
-Circle Gateway batches many signed offchain authorizations into a single onchain settlement, enabling economically viable sub-cent payments.
+Built for the **Lepton Agents Hackathon** (Canteen × Circle × Arc).
 
-<img alt="Arc Nanopayments Demo dashboard" src="public/screenshot.png" />
+---
 
-## Table of Contents
+## The problem
 
-- [Prerequisites](#prerequisites)
-- [Getting Started](#getting-started)
-- [How It Works](#how-it-works)
-- [Paywalled Endpoints](#paywalled-endpoints)
-- [Seller Dashboard](#seller-dashboard)
-- [Environment Variables](#environment-variables)
-- [Demo Credentials](#demo-credentials)
+For as long as a payment couldn't be smaller than ~30¢ after fees, there was no way to sell a 5¢ article. The only move was to bundle a month and charge $10. Every subscription is a quiet admission that the real unit was too small to sell on its own.
 
-## Prerequisites
+Circle Gateway removes that floor — gasless, batched USDC payments as small as a fraction of a cent, settled on Arc in under half a second. Praeco is what a publishing platform looks like when the smallest unit is finally sellable.
 
-- **Node.js v22+** — Install via [nvm](https://github.com/nvm-sh/nvm)
-- **Supabase CLI** — Install via `npm install -g supabase` or see [Supabase CLI docs](https://supabase.com/docs/guides/cli/getting-started)
-- **Docker Desktop** (only if using the local Supabase path) — [Install Docker Desktop](https://www.docker.com/products/docker-desktop/)
-- *(Optional)* An **[OpenAI API key](https://platform.openai.com/api-keys)** — enables the LLM-driven payment agent. Without it, the agent runs in mock mode with scripted tool calls.
+## What it does
 
-## Getting Started
+- **Read by the lepton.** Every article is priced per read (~$0.01). One click pays the writer directly in USDC; the content unlocks.
+- **No wallet friction.** A reader becomes a "citizen" with a username and a **Golden Relic** — an ancient code that encrypts a wallet minted for them. No extension, no seed phrase, no card. The relic is the only key; the database stores ciphertext only.
+- **Tip, like, subscribe.** Leave a tip on top of a read, like a piece, follow a writer — all free.
+- **Publish and earn.** Write a piece, set a per-read price, publish. Add collaborators and each read **splits automatically** by share. Withdraw earnings to any wallet, anytime.
+- **Status you can see.** Reading and writing earn *renown*, which raises your rank (Plebeian → Citizen → Patrician → Senator → Consul) and the gold laurel wreath beside your name.
+- **A paying agent.** Give the Reader-Agent a topic and a budget; it reads the catalogue, **decides** which pieces are worth the toll, pays the writers itself, and briefs you — every decision logged.
 
-1. Clone the repository and install dependencies:
+## How payments work (the Circle/Arc stack)
 
-   ```bash
-   git clone https://github.com/akelani-circle/arc-nanopayments-demo.git
-   cd arc-nanopayments-demo
-   npm install
-   ```
+| Layer | Use |
+| --- | --- |
+| **x402** | Every paid resource (`/api/read/[id]`, `/api/tip`, `/api/pro`) returns HTTP 402 with payment requirements; the buyer signs and retries. |
+| **Circle Gateway batching** | `GatewayClient.pay()` settles gasless, batched USDC payments; `BatchFacilitatorClient` verifies + settles server-side. |
+| **Custodial wallets** | Each citizen's wallet is minted + pre-funded from a treasury and its key encrypted under the relic (scrypt + AES-GCM), so paying is one click. |
+| **Withdraw** | `GatewayClient.withdraw()` cashes earnings out to any address on Arc. |
+| **USDC on Arc** | Native settlement; reads, tips, splits, and the Pro subscription all settle in test USDC. |
 
-2. Set up environment variables:
+The on-chain settlement (deposits, batch settlements, withdrawals) is verifiable on the [Arc testnet explorer](https://testnet.arcscan.app); per-read authorizations are batched off-chain, which is what makes sub-cent payments economical.
 
-   ```bash
-   cp .env.example .env.local
-   ```
+## Pro
 
-   Then edit `.env.local` and fill in all required values (see [Environment Variables](#environment-variables) section below).
+Reading, tipping, publishing, and earning are always free. **Pro** is an optional paid tier that unlocks studio writing tools (draft / improve / suggest title, teaser, price), capped per day. It's paid in USDC from the citizen's wallet — a creator-tools subscription, never a paywall on content.
 
-3. Generate seller and buyer wallets:
+## Stack
 
-   ```bash
-   npm run generate-wallets
-   ```
+- **Next.js 16** (App Router, React 19) · **Tailwind 4**
+- **Neon** Postgres
+- **Circle** `@circle-fin/x402-batching` · **viem** (`arcTestnet`)
+- **OpenAI** (`gpt-4o`) for the Reader-Agent and the writing studio
+- GSAP + Lenis + Framer Motion for the editorial, antiquity-themed UI
 
-   This creates two EVM wallets (seller and buyer) and writes the addresses and private keys to `.env.local`. Follow the on-screen instructions to fund the buyer wallet with testnet USDC via the [Circle faucet](https://faucet.circle.com/).
-
-4. Set up the database — Choose one of the two paths below:
-
-   <details>
-   <summary><strong>Path 1: Local Supabase (Docker)</strong></summary>
-
-   Requires Docker Desktop installed and running.
-
-   ```bash
-   npx supabase start
-   npx supabase migration up
-   ```
-
-   The output of `npx supabase start` will display the Supabase URL and API keys needed for your `.env.local`.
-
-   </details>
-
-   <details>
-   <summary><strong>Path 2: Remote Supabase (Cloud)</strong></summary>
-
-   Requires a [Supabase](https://supabase.com/) account and project.
-
-   ```bash
-   npx supabase link --project-ref <your-project-ref>
-   npx supabase db push
-   ```
-
-   Retrieve your project URL and API keys from the Supabase dashboard under **Settings > API**.
-
-   </details>
-
-5. Start the development server:
-
-   ```bash
-   npm run dev
-   ```
-
-   The app will be available at `http://localhost:3000`.
-
-6. Run the AI payment agent:
-
-   ```bash
-   npm run agent
-   ```
-
-   The agent uses the buyer wallet to purchase resources from the x402-protected premium endpoints, paying with USDC on the Arc Testnet. If `OPENAI_API_KEY` is set, the agent uses the LLM to decide which tools to call; otherwise it falls back to a scripted mock run. You can optionally pass a custom query:
-
-   ```bash
-   npm run agent -- "Buy me a quote at http://localhost:3000/api/premium/quote"
-   ```
-
-   To set a USDC spending limit, use the `--limit` flag. The agent will pause when the limit is reached and prompt for additional allowance:
-
-   ```bash
-   npm run agent -- --limit 0.5
-   ```
-
-## How It Works
-
-- Built with [Next.js](https://nextjs.org/) App Router and [Supabase](https://supabase.com/)
-- Uses the [x402 protocol](https://www.x402.org/) for HTTP 402 nanopayments with USDC on the [Arc Network](https://arc.circle.com/)
-- Uses [Circle's x402 batching SDK](https://www.npmjs.com/package/@circle-fin/x402-batching) (`GatewayClient`) for gasless payment facilitation
-- Includes an AI payment agent built with [LangChain](https://js.langchain.com/) and [Deep Agents](https://www.npmjs.com/package/deepagents) that can check balances, deposit USDC into Gateway, verify endpoint support, and autonomously pay for x402-protected resources
-- Seller dashboard with real-time payment monitoring, Gateway balance display, and cross-chain withdrawal support
-- Payment events and withdrawals are persisted to Supabase with real-time subscriptions
-- Styled with [Tailwind CSS](https://tailwindcss.com) and components from [shadcn/ui](https://ui.shadcn.com/)
-
-## Paywalled Endpoints
-
-The seller exposes several x402-protected API routes at different price points:
-
-| Endpoint | Method | Price (USDC) | Description |
-| --- | --- | --- | --- |
-| `/api/premium/quote` | GET | $0.001 | Returns a premium inspirational quote |
-| `/api/premium/dataset` | GET | $0.01 | Returns a small JSON analytics dataset |
-| `/api/premium/compute` | POST | $0.0003 | Performs text analysis on submitted content |
-| `/api/premium/agent-task` | GET | $0.03 | Returns a clue/step for a treasure hunt task |
-
-Each endpoint returns `402 Payment Required` for unpaid requests. The buyer agent automatically signs the authorization and retries with the payment signature to receive the content.
-
-## Seller Dashboard
-
-The dashboard at `/dashboard` provides:
-
-- **Gateway Balance** — Top-bar badge showing the seller's available Gateway balance, with a detail dialog for total, withdrawing, withdrawable, and wallet USDC balances
-- **Payments Table** — Real-time list of incoming nanopayments with filtering and sorting, linked to [Arc Testnet Explorer](https://testnet.arcscan.app)
-- **Withdraw Dialog** — Withdraw available USDC from Gateway to a wallet address on any supported testnet chain (Arc Testnet, Base Sepolia, Ethereum Sepolia, Arbitrum Sepolia, Optimism Sepolia, Avalanche Fuji, Polygon Amoy)
-
-## Environment Variables
-
-Copy `.env.example` to `.env.local` and fill in the required values:
+## Run it locally
 
 ```bash
-# Supabase
-NEXT_PUBLIC_SUPABASE_URL=your-project-url
-NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY=your-publishable-or-anon-key
-SUPABASE_SERVICE_ROLE_KEY=your-service-role-key
+npm install
+cp .env.example .env.local   # then fill in the values below
 
-# x402 / Circle Nanopayments
-SELLER_ADDRESS=0xYourWalletAddress
-SELLER_PRIVATE_KEY=0xYourSellerPrivateKey
+# generate the treasury/seller wallets, then fund the buyer wallet
+npm run generate-wallets     # prints a buyer address → fund at https://faucet.circle.com (Arc Testnet)
 
-# Buyer wallet (for the payment agent)
-BUYER_ADDRESS=0xYourBuyerWalletAddress
-BUYER_PRIVATE_KEY=0xYourBuyerPrivateKey
+# create the database schema + demo content
+node --env-file=.env.local scripts/reset.mjs
+node --env-file=.env.local scripts/seed.mjs
 
-# AI Payment Agent (optional — omit to run in mock mode)
-# OPENAI_API_KEY=your-openai-api-key
+npm run dev                  # http://localhost:3000
 ```
 
-| Variable | Scope | Purpose |
-| --- | --- | --- |
-| `NEXT_PUBLIC_SUPABASE_URL` | Public | Supabase project URL. |
-| `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` | Public | Supabase anonymous / publishable key. |
-| `SUPABASE_SERVICE_ROLE_KEY` | Server-side | Supabase service-role key, used to record payment events and withdrawals. |
-| `SELLER_ADDRESS` | Server-side | EVM wallet address for receiving USDC payments. |
-| `SELLER_PRIVATE_KEY` | Server-side | Seller wallet private key, used for Gateway balance queries and withdrawals. |
-| `BUYER_ADDRESS` | Agent | Buyer wallet address for making payments. |
-| `BUYER_PRIVATE_KEY` | Agent | Buyer wallet private key for signing payment authorizations. |
-| `OPENAI_API_KEY` | Agent | *(Optional)* OpenAI API key. If omitted, the agent runs in mock mode with scripted tool calls. |
+Required env in `.env.local`:
 
-> **Tip:** Run `npm run generate-wallets` to auto-generate the `SELLER_ADDRESS`, `SELLER_PRIVATE_KEY`, `BUYER_ADDRESS`, and `BUYER_PRIVATE_KEY` values.
+```
+DATABASE_URL=postgres://…            # Neon
+SELLER_PRIVATE_KEY=0x…  SELLER_ADDRESS=0x…
+BUYER_PRIVATE_KEY=0x…   BUYER_ADDRESS=0x…   # treasury that pre-funds citizen wallets
+PRAECO_SESSION_SECRET=…              # openssl rand -hex 32
+OPENAI_API_KEY=sk-…                  # platform key for the AI features
+```
 
-## Demo Credentials
+## Try it
 
-The app uses a hardcoded demo account for local development:
+1. **Become a citizen** — pick a username, watch your Golden Relic forge, save it.
+2. **Read a piece** for a lepton; tip the writer; check your wreath in the nav.
+3. **Publish** something in the Studio; add a collaborator to see splits accrue.
+4. **Send the agent** — `/agent`, give it a topic and a budget, watch it pay writers and brief you.
+5. **Cash out** from your dashboard at `/me`.
 
-| Email | Password |
-| --- | --- |
-| `admin@example.com` | `123456` |
+## Notes
 
-## Security & Usage Model
+- Testnet only — all amounts are Circle **test** USDC.
+- The payment rail and `/api/premium/*` test harness are derived from Circle's open-source [`arc-nanopayments`](https://github.com/circlefin/arc-nanopayments) reference (Apache-2.0); everything else — citizenship, the relic/encryption, renown and wreaths, splits, tipping, follow/like, the Reader-Agent, Pro, and the UI — is original to Praeco.
+- The relic is the only key to an account. Lose it and the vault is sealed (as with any seed phrase); email backup is on the roadmap.
 
-This sample application:
-- Assumes testnet usage only
-- Handles secrets via environment variables
-- Is not intended for production use without modification
+---
+
+*The praeco was Rome's public crier, paid to carry the news. The lepton was the smallest Greek coin. Praeco pays the crier for every retelling — one lepton at a time.*

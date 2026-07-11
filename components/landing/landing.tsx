@@ -183,7 +183,7 @@ export function Landing({
         <section data-relic="ledger" className="mx-auto max-w-3xl px-6 py-20">
           <Chapter n="04" title="The Ledger · every lepton, on the record" />
           <ScrollReveal>
-            <LedgerFeed initialReads={reads} initialTotals={totals} />
+            <LedgerFeed initialReads={reads} initialTotals={totals} limit={5} />
           </ScrollReveal>
         </section>
 

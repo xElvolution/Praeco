@@ -66,10 +66,13 @@ export function LedgerFeed({
   initialReads,
   initialTotals,
   viewer = null,
+  limit,
 }: {
   initialReads: Read[];
   initialTotals: Totals;
   viewer?: string | null;
+  /** Cap the visible rows (landing shows a taste; /ledger shows the carving in full). */
+  limit?: number;
 }) {
   const [scope, setScope] = useState<"all" | "mine">("all");
   const [reads, setReads] = useState<Read[]>(initialReads);
@@ -115,6 +118,8 @@ export function LedgerFeed({
   }, [scope, fetchScope]);
 
   const usdc = Number(totals.total_usdc || 0);
+  const shown = limit ? reads.slice(0, limit) : reads;
+  const hidden = limit ? Math.max(0, totals.total_reads - limit) : 0;
 
   return (
     <div>
@@ -169,7 +174,7 @@ export function LedgerFeed({
         ) : (
           <ul>
             <AnimatePresence initial={false}>
-              {reads.map((r) => {
+              {shown.map((r) => {
                 const mineRow = !!viewer && (r.reader_handle === viewer || r.creator_handle === viewer);
                 return (
                   <motion.li
@@ -202,6 +207,15 @@ export function LedgerFeed({
               })}
             </AnimatePresence>
           </ul>
+        )}
+        {limit && hidden > 0 && (
+          <Link
+            href="/ledger"
+            className="flex items-center justify-center gap-2 border-t border-border bg-secondary/30 px-5 py-3 text-sm text-primary transition-colors hover:bg-secondary/60"
+          >
+            <span className="font-serif">See the full ledger</span>
+            <span className="label-mono">+{hidden} more</span>
+          </Link>
         )}
       </div>
     </div>

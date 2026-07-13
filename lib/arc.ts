@@ -19,6 +19,8 @@ export const ARC_TESTNET_NETWORK = "eip155:5042002";
 export const ARC_TESTNET_GATEWAY_WALLET =
   "0x0077777d7EBA4688BDeF3E311b846F25870A19B9" as const;
 export const ARC_EXPLORER = "https://testnet.arcscan.app";
+/** Circle's testnet faucet - where citizens claim free Arc test USDC. */
+export const ARC_FAUCET = "https://faucet.circle.com";
 
 /** Build an Arc Testnet block-explorer link for a tx hash. */
 export function explorerTx(hash: string) {

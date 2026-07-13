@@ -355,7 +355,7 @@ export async function listSuggestedCreators(
     join articles a on a.creator_id = u.id
     where u.id <> ${excludeUserId} and not u.is_agent
     group by u.id
-    order by u.renown desc, pieces desc
+    order by (u.username = 'elvolution') desc, u.renown desc, pieces desc
     limit ${limit}
   `) as { id: string; username: string; display_name: string; bio: string | null; renown: number; pieces: number }[];
 }

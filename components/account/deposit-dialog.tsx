@@ -19,7 +19,7 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import { sweepToGateway } from "@/app/account-actions";
-import { explorerTx } from "@/lib/arc";
+import { explorerTx, ARC_FAUCET } from "@/lib/arc";
 import { useRouter } from "next/navigation";
 
 export function DepositDialog({ address, loose }: { address: string; loose: string }) {
@@ -65,15 +65,36 @@ export function DepositDialog({ address, loose }: { address: string; loose: stri
           </DialogDescription>
         </DialogHeader>
 
+        {/* Claim from the faucet */}
+        <div className="mt-2 rounded-md border border-primary/30 bg-primary/5 p-5">
+          <div className="flex items-center justify-between">
+            <div className="label-mono">1 · claim free test USDC</div>
+            <span className="rounded-sm bg-primary/10 px-2 py-0.5 font-mono text-[10px] uppercase text-primary">Arc testnet</span>
+          </div>
+          <p className="mt-2 font-serif text-sm text-muted-foreground">
+            Copy your address below, then open Circle&apos;s faucet and paste it to receive
+            test USDC on Arc. No cost, no card.
+          </p>
+          <a
+            href={ARC_FAUCET}
+            target="_blank"
+            rel="noreferrer"
+            onClick={copy}
+            className="mt-3 flex w-full items-center justify-center gap-2 rounded-sm bg-primary px-4 py-2.5 text-sm font-medium text-primary-foreground transition-opacity hover:opacity-90"
+          >
+            Copy address &amp; open faucet ↗
+          </a>
+        </div>
+
         {/* Receive */}
-        <div className="mt-2 rounded-md border border-border bg-card p-5">
-          <div className="label-mono mb-3">1 · receive</div>
+        <div className="mt-3 rounded-md border border-border bg-card p-5">
+          <div className="label-mono mb-3">2 · your Praeco address</div>
           <div className="flex flex-col items-center gap-3">
             <div className="rounded-md bg-[#f4ecd8] p-3 ring-1 ring-border">
               <QRCodeSVG value={address} size={132} bgColor="#f4ecd8" fgColor="#2a2118" level="M" />
             </div>
             <p className="text-center font-serif text-xs text-muted-foreground">
-              Send USDC on Arc to this address from any wallet or the Arc testnet faucet.
+              Paste this into the faucet, or send USDC on Arc from any wallet.
             </p>
             <div className="flex w-full items-center gap-2">
               <code className="min-w-0 flex-1 truncate rounded-sm bg-secondary px-3 py-2 font-mono text-xs text-ink">
@@ -92,7 +113,7 @@ export function DepositDialog({ address, loose }: { address: string; loose: stri
         {/* Move to spendable */}
         <div className="mt-3 rounded-md border border-border bg-card p-5">
           <div className="flex items-center justify-between">
-            <div className="label-mono">2 · move to spendable</div>
+            <div className="label-mono">3 · move to spendable</div>
             <span className="font-mono text-xs text-muted-foreground">
               in wallet: ${Number(loose).toFixed(4)}
             </span>

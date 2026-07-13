@@ -196,21 +196,32 @@ export function Landing({
               <Link href="/studio" className="text-primary underline">Publish the first.</Link>
             </p>
           ) : (
-            <ul className="grid gap-px overflow-hidden rounded-md border border-border bg-border sm:grid-cols-2">
-              {articles.map((a) => (
-                <li key={a.id} className="bg-card">
-                  <Link href={`/a/${a.slug}`} className="group block h-full p-6 transition-colors hover:bg-secondary/50">
-                    <div className="flex items-center justify-between">
-                      <span className="label-mono">{a.creator_name}</span>
-                      <span className="rounded-sm bg-primary/10 px-2 py-0.5 font-mono text-xs text-primary">${a.price_usdc}/read</span>
-                    </div>
-                    <h3 className="mt-3 font-display text-xl font-semibold leading-snug text-ink group-hover:text-primary">{a.title}</h3>
-                    <p className="mt-2 line-clamp-2 font-serif text-sm text-muted-foreground">{a.preview}</p>
-                    <p className="mt-4 label-mono">{a.reads_count} reads · ${Number(a.earned_usdc).toFixed(3)} earned</p>
-                  </Link>
-                </li>
-              ))}
-            </ul>
+            <>
+              <ul className="grid gap-px overflow-hidden rounded-md border border-border bg-border sm:grid-cols-2">
+                {articles.slice(0, 6).map((a) => (
+                  <li key={a.id} className="bg-card">
+                    <Link href={`/a/${a.slug}`} className="group block h-full p-6 transition-colors hover:bg-secondary/50">
+                      <div className="flex items-center justify-between">
+                        <span className="label-mono">{a.creator_name}</span>
+                        <span className="rounded-sm bg-primary/10 px-2 py-0.5 font-mono text-xs text-primary">${a.price_usdc}/read</span>
+                      </div>
+                      <h3 className="mt-3 font-display text-xl font-semibold leading-snug text-ink group-hover:text-primary">{a.title}</h3>
+                      <p className="mt-2 line-clamp-2 font-serif text-sm text-muted-foreground">{a.preview}</p>
+                      <p className="mt-4 label-mono">{a.reads_count} reads · ${Number(a.earned_usdc).toFixed(3)} earned</p>
+                    </Link>
+                  </li>
+                ))}
+              </ul>
+              <div className="mt-6 flex justify-center">
+                <Link
+                  href="/read"
+                  className="inline-flex items-center gap-2 rounded-sm border border-border bg-card px-5 py-2.5 text-sm text-ink transition-colors hover:bg-secondary/50"
+                >
+                  <span className="font-serif">Browse the whole Forum</span>
+                  {articles.length > 6 && <span className="label-mono">{articles.length} pieces</span>}
+                </Link>
+              </div>
+            </>
           )}
         </section>
 

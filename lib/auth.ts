@@ -14,7 +14,7 @@ import type { Hex } from "viem";
 import { provisionReaderWallet } from "./treasury";
 import { forgeRelic, normalizeRelic } from "./relic";
 import { sealWithSecret, openWithSecret, sessionSecret } from "./crypto";
-import { createUser, getUserByUsername, getUserById, setReferredBy, type User } from "./data";
+import { createUser, getUserByUsername, getUserById, setReferredBy, updateEncPriv, deleteUser, type User } from "./data";
 
 const SESSION_COOKIE = "praeco_cit";
 const COOKIE_OPTS = {
@@ -88,6 +88,38 @@ export async function loginCitizen(usernameRaw: string, relicRaw: string): Promi
 export async function logoutCitizen() {
   const jar = await cookies();
   jar.delete(SESSION_COOKIE);
+}
+
+/**
+ * Forge a fresh relic for the signed-in citizen and re-seal their wallet key
+ * under it. The old relic stops working. Returns the new relic once - it is
+ * never stored in plaintext, so the citizen must save it now.
+ */
+export async function regenerateRelic(): Promise<
+  { ok: true; relic: string } | { ok: false; error: string }
+> {
+  const cit = await currentCitizen();
+  if (!cit) return { ok: false, error: "NOT_CITIZEN" };
+  const relic = forgeRelic();
+  const encPriv = sealWithSecret(cit.privKey, relic);
+  await updateEncPriv(cit.user.id, encPriv);
+  return { ok: true, relic };
+}
+
+/**
+ * Permanently delete the signed-in citizen's account. Cascades remove their
+ * articles, reads, follows, likes, and quests. The custodial wallet key is
+ * gone with the row and cannot be recovered.
+ */
+export async function deleteAccount(): Promise<
+  { ok: true } | { ok: false; error: string }
+> {
+  const cit = await currentCitizen();
+  if (!cit) return { ok: false, error: "NOT_CITIZEN" };
+  await deleteUser(cit.user.id);
+  const jar = await cookies();
+  jar.delete(SESSION_COOKIE);
+  return { ok: true };
 }
 
 /** The signed-in citizen + their in-session private key, or null. */

@@ -14,6 +14,7 @@ import OpenAI from "openai";
 import type { Hex } from "viem";
 import { provisionReaderWallet, payAsReader } from "./treasury";
 import { getOpenAIKey } from "./settings";
+import { getBaseUrl } from "./base-url";
 import {
   listArticles,
   recordRead,
@@ -24,7 +25,6 @@ import {
 } from "./data";
 
 const MODEL = process.env.PRAECO_LLM_MODEL ?? "gpt-4o";
-const BASE_URL = process.env.BASE_URL ?? "http://localhost:3000";
 
 type Decision = {
   article_id: string;
@@ -183,6 +183,8 @@ export async function runReaderAgent(
   const articles = await listArticles();
   if (articles.length === 0) throw new Error("No articles to read yet.");
 
+  const baseUrl = await getBaseUrl();
+
   const apiKey = await getOpenAIKey();
   const client = apiKey ? new OpenAI({ apiKey }) : null;
 
@@ -240,7 +242,7 @@ export async function runReaderAgent(
     try {
       const paid = await payAsReader<{ body: string; title: string }>(
         wallet.privateKey as Hex,
-        `${BASE_URL}/api/read/${article.id}`,
+        `${baseUrl}/api/read/${article.id}`,
         { method: "GET" },
       );
       spent += price;

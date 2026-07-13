@@ -28,6 +28,7 @@ export function DepositDialog({ address, loose }: { address: string; loose: stri
   const [copied, setCopied] = useState(false);
   const [busy, setBusy] = useState(false);
   const [tx, setTx] = useState<string | null>(null);
+  const [amount, setAmount] = useState("");
   const hasLoose = Number(loose) > 0;
 
   function copy() {
@@ -39,10 +40,11 @@ export function DepositDialog({ address, loose }: { address: string; loose: stri
 
   async function move() {
     setBusy(true);
-    const res = await sweepToGateway();
+    const res = await sweepToGateway(amount || undefined);
     setBusy(false);
     if (res.ok) {
       setTx(res.txHash);
+      setAmount("");
       toast.success(`Moved ${res.amount} USDC to spendable.`);
       router.refresh();
     } else {
@@ -114,20 +116,56 @@ export function DepositDialog({ address, loose }: { address: string; loose: stri
         <div className="mt-3 rounded-md border border-border bg-card p-5">
           <div className="flex items-center justify-between">
             <div className="label-mono">3 · move to spendable</div>
-            <span className="font-mono text-xs text-muted-foreground">
+            <span className="flex items-center gap-1.5 font-mono text-xs text-muted-foreground">
               in wallet: ${Number(loose).toFixed(4)}
+              <button
+                onClick={() => {
+                  router.refresh();
+                  toast.success("Balances refreshed.");
+                }}
+                title="Refresh balance"
+                className="rounded-sm border border-border px-1.5 py-0.5 text-[10px] text-ink transition-colors hover:bg-secondary"
+              >
+                ↻
+              </button>
             </span>
           </div>
           <p className="mt-2 font-serif text-sm text-muted-foreground">
             Deposits loose wallet USDC into Circle Gateway so you can spend it on reads
-            and withdraw it.
+            and withdraw it. Leave the amount empty to move everything.
           </p>
+          <div className="mt-3 flex items-center gap-2">
+            <input
+              type="number"
+              inputMode="decimal"
+              min="0"
+              step="0.01"
+              value={amount}
+              onChange={(e) => setAmount(e.target.value)}
+              placeholder={hasLoose ? `up to ${Number(loose).toFixed(4)}` : "0.00"}
+              disabled={busy || !hasLoose}
+              className="min-w-0 flex-1 rounded-sm border border-border bg-secondary px-3 py-2 font-mono text-sm text-ink outline-none placeholder:text-muted-foreground focus:border-primary disabled:opacity-50"
+            />
+            <button
+              onClick={() => setAmount(loose)}
+              disabled={busy || !hasLoose}
+              className="shrink-0 rounded-sm border border-border px-3 py-2 font-mono text-xs text-ink transition-colors hover:bg-secondary disabled:opacity-50"
+            >
+              max
+            </button>
+          </div>
           <button
             onClick={move}
             disabled={busy || !hasLoose}
             className="mt-3 w-full rounded-sm bg-primary px-4 py-2.5 text-sm font-medium text-primary-foreground transition-opacity hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50"
           >
-            {busy ? "Moving…" : hasLoose ? `Move $${Number(loose).toFixed(4)} to spendable` : "Nothing to move yet"}
+            {busy
+              ? "Moving…"
+              : !hasLoose
+                ? "Nothing to move yet"
+                : amount
+                  ? `Move $${Number(amount || 0).toFixed(4)} to spendable`
+                  : `Move all ($${Number(loose).toFixed(4)}) to spendable`}
           </button>
           {tx && (
             <a

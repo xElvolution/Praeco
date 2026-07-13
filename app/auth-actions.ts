@@ -4,7 +4,7 @@
  */
 "use server";
 
-import { signupCitizen, loginCitizen, logoutCitizen } from "@/lib/auth";
+import { signupCitizen, loginCitizen, logoutCitizen, regenerateRelic, deleteAccount } from "@/lib/auth";
 
 export async function doSignup(username: string, displayName?: string, ref?: string) {
   return signupCitizen(username, displayName, ref);
@@ -16,4 +16,12 @@ export async function doLogin(username: string, relic: string) {
 
 export async function doLogout() {
   await logoutCitizen();
+}
+
+export async function doRegenerateRelic() {
+  return regenerateRelic();
+}
+
+export async function doDeleteAccount() {
+  return deleteAccount();
 }

@@ -9,8 +9,7 @@ import { currentCitizen } from "@/lib/auth";
 import { payAsReader, payFromTreasury } from "@/lib/treasury";
 import { setProUntil, getUserById, recordReferralEarning } from "@/lib/data";
 import { PRO_DAYS, PRO_PRICE_USDC, REFERRAL_RATE } from "@/lib/pro";
-
-const BASE_URL = process.env.BASE_URL ?? "http://localhost:3000";
+import { getBaseUrl } from "@/lib/base-url";
 
 export type SubscribeResult =
   | { ok: true; until: string; transaction: string }
@@ -43,9 +42,10 @@ export async function subscribePro(): Promise<SubscribeResult> {
   if (!cit) return { ok: false, error: "NOT_CITIZEN" };
 
   try {
+    const baseUrl = await getBaseUrl();
     const paid = await payAsReader<{ ok: boolean }>(
       cit.privKey,
-      `${BASE_URL}/api/pro`,
+      `${baseUrl}/api/pro`,
       { method: "GET" },
     );
     const until = new Date(Date.now() + PRO_DAYS * 24 * 60 * 60 * 1000).toISOString();

@@ -14,8 +14,7 @@ import {
   bumpRenown,
 } from "@/lib/data";
 import { isTipAmount } from "@/lib/tips";
-
-const BASE_URL = process.env.BASE_URL ?? "http://localhost:3000";
+import { getBaseUrl } from "@/lib/base-url";
 
 /** Payment errors can be long SDK dumps - keep what fits in a toast. */
 function briefError(error: unknown): string {
@@ -35,9 +34,10 @@ export async function unlockArticle(articleId: string): Promise<UnlockResult> {
   if (!article) return { ok: false, error: "Article not found" };
 
   try {
+    const baseUrl = await getBaseUrl();
     const paid = await payAsReader<{ body: string; title: string }>(
       cit.privKey,
-      `${BASE_URL}/api/read/${articleId}`,
+      `${baseUrl}/api/read/${articleId}`,
       { method: "GET" },
     );
 
@@ -81,9 +81,10 @@ export async function tipArticle(articleId: string, amount: string): Promise<Tip
   if (!article) return { ok: false, error: "Article not found" };
 
   try {
+    const baseUrl = await getBaseUrl();
     const paid = await payAsReader<{ ok: boolean }>(
       cit.privKey,
-      `${BASE_URL}/api/tip/${articleId}?amount=${encodeURIComponent(amount)}`,
+      `${baseUrl}/api/tip/${articleId}?amount=${encodeURIComponent(amount)}`,
       { method: "GET" },
     );
     await recordRead({

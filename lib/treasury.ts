@@ -120,6 +120,24 @@ export async function readerBalances(privateKey: Hex) {
   return gateway.getBalances();
 }
 
+/**
+ * Ensure a reader wallet holds enough native gas for an on-chain action
+ * (Gateway deposit/approval). Signup funds gas once; a citizen who later
+ * tops up from the faucet may have spent it. Tops up from the treasury
+ * when the balance dips below half the standard grant.
+ */
+export async function ensureGas(privateKey: Hex): Promise<void> {
+  const account = privateKeyToAccount(privateKey);
+  const balance = await publicClient.getBalance({ address: account.address });
+  if (balance >= GAS_FUND / BigInt(2)) return;
+  const treasury = walletClientFor(treasuryKey());
+  const tx = await withNonceRetry(
+    () => treasury.sendTransaction({ to: account.address, value: GAS_FUND }),
+    "gas-topup",
+  );
+  await publicClient.waitForTransactionReceipt({ hash: tx });
+}
+
 /** Withdraw USDC from a citizen's Gateway balance to an external address. */
 export async function withdrawFromGateway(
   privateKey: Hex,

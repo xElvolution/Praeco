@@ -147,6 +147,16 @@ export async function getUserByUsername(username: string): Promise<User | null> 
   return rows[0] ?? null;
 }
 
+/** Re-seal a user's wallet key under a new relic (relic regeneration). */
+export async function updateEncPriv(userId: string, encPriv: string) {
+  await sql`update users set enc_priv = ${encPriv} where id = ${userId}`;
+}
+
+/** Permanently delete a user. Foreign keys cascade to their content + activity. */
+export async function deleteUser(userId: string) {
+  await sql`delete from users where id = ${userId}`;
+}
+
 export async function bumpRenown(userId: string, by = 1) {
   await sql`update users set renown = renown + ${by} where id = ${userId}`;
 }

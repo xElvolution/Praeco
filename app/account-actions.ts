@@ -7,7 +7,7 @@
 import { isAddress } from "viem";
 import type { Hex } from "viem";
 import { currentCitizen } from "@/lib/auth";
-import { withdrawFromGateway, depositToGateway, readerBalances } from "@/lib/treasury";
+import { withdrawFromGateway, depositToGateway, readerBalances, ensureGas } from "@/lib/treasury";
 import { sql } from "@/lib/db";
 
 export type WithdrawResult =
@@ -38,10 +38,12 @@ export type DepositResult =
 
 /**
  * Move the citizen's loose wallet USDC into Circle Gateway, making it spendable
- * (and withdrawable). Deposits the full loose balance; refuses when there's
- * nothing to move.
+ * (and withdrawable). Moves `amount` if given (must not exceed the loose
+ * balance), otherwise the full loose balance. Tops up gas from the treasury
+ * first - the deposit is an on-chain transaction and a citizen who claimed
+ * from the faucet may have no gas left.
  */
-export async function sweepToGateway(): Promise<DepositResult> {
+export async function sweepToGateway(amount?: string): Promise<DepositResult> {
   const cit = await currentCitizen();
   if (!cit) return { ok: false, error: "NOT_CITIZEN" };
 
@@ -56,8 +58,19 @@ export async function sweepToGateway(): Promise<DepositResult> {
     return { ok: false, error: "Nothing to move - your wallet has no loose USDC yet." };
   }
 
+  let toMove = loose;
+  if (amount !== undefined && amount.trim() !== "") {
+    const amt = Number(amount);
+    if (isNaN(amt) || amt <= 0) return { ok: false, error: "Enter an amount greater than 0." };
+    if (amt > Number(loose)) {
+      return { ok: false, error: `Only $${Number(loose).toFixed(4)} is loose in your wallet.` };
+    }
+    toMove = amount.trim();
+  }
+
   try {
-    const res = await depositToGateway(cit.privKey as Hex, loose);
+    await ensureGas(cit.privKey as Hex);
+    const res = await depositToGateway(cit.privKey as Hex, toMove);
     return { ok: true, txHash: res.depositTxHash, amount: res.formattedAmount };
   } catch (error) {
     return { ok: false, error: (error as Error).message.slice(0, 160) };

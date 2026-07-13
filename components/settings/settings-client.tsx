@@ -11,9 +11,9 @@ import { EditProfileForm } from "@/components/account/edit-profile-form";
 import { THEMES, applyTheme, getTheme, type ThemeKey } from "@/lib/theme";
 import { TOPICS } from "@/lib/topics";
 import { saveInterestsAction } from "@/app/profile-actions";
-import { doLogout } from "@/app/auth-actions";
+import { doLogout, doRegenerateRelic, doDeleteAccount } from "@/app/auth-actions";
 
-type Tab = "profile" | "interests" | "theme" | "notifications" | "support";
+type Tab = "profile" | "interests" | "theme" | "notifications" | "security" | "support";
 
 const NOTIFS = [
   { key: "subscriber", label: "New subscriber", sub: "when someone follows you" },
@@ -96,11 +96,54 @@ export function SettingsClient({
     router.refresh();
   }
 
+  const [newRelic, setNewRelic] = useState<string | null>(null);
+  const [relicBusy, setRelicBusy] = useState(false);
+  const [relicCopied, setRelicCopied] = useState(false);
+  const [confirmText, setConfirmText] = useState("");
+  const [deleteBusy, setDeleteBusy] = useState(false);
+
+  async function backupRelic() {
+    setRelicBusy(true);
+    const res = await doRegenerateRelic();
+    setRelicBusy(false);
+    if (res.ok) {
+      setNewRelic(res.relic);
+      toast.success("A new relic is forged. Save it now.");
+    } else {
+      toast.error("Could not forge a new relic. Try again.");
+    }
+  }
+
+  function copyRelic() {
+    if (!newRelic) return;
+    navigator.clipboard?.writeText(newRelic);
+    setRelicCopied(true);
+    toast.success("Relic copied.");
+    setTimeout(() => setRelicCopied(false), 1600);
+  }
+
+  async function removeAccount() {
+    if (confirmText.trim().toUpperCase() !== "DELETE") {
+      toast.error('Type DELETE to confirm.');
+      return;
+    }
+    setDeleteBusy(true);
+    const res = await doDeleteAccount();
+    setDeleteBusy(false);
+    if (res.ok) {
+      toast.success("Your account has been deleted.");
+      router.push("/");
+      router.refresh();
+    } else {
+      toast.error("Could not delete your account. Try again.");
+    }
+  }
+
   return (
     <div className="mt-8 grid gap-8 sm:grid-cols-[160px_1fr]">
       {/* Tab rail */}
       <nav className="flex gap-2 sm:flex-col">
-        {(["profile", "interests", "theme", "notifications", "support"] as Tab[]).map((t) => (
+        {(["profile", "interests", "theme", "notifications", "security", "support"] as Tab[]).map((t) => (
           <button
             key={t}
             onClick={() => setTab(t)}
@@ -204,6 +247,83 @@ export function SettingsClient({
           </div>
         )}
 
+        {tab === "security" && (
+          <div>
+            <h2 className="font-display text-xl font-semibold text-ink">Security</h2>
+            <p className="mt-1 font-serif text-sm text-muted-foreground">
+              Your relic is the only key to your vault and wallet. Keep a backup somewhere safe.
+            </p>
+
+            {/* Relic backup */}
+            <div className="mt-5 rounded-md border border-border bg-card p-5">
+              <div className="font-display text-base font-semibold text-ink">Back up your relic</div>
+              <p className="mt-1 font-serif text-sm text-muted-foreground">
+                Forge a fresh relic and save it. This becomes your new key - the old
+                relic stops working. We never store it in readable form, so write it
+                down the moment it appears.
+              </p>
+              {newRelic ? (
+                <div className="mt-4">
+                  <div className="rounded-md border border-primary/40 bg-primary/5 p-4">
+                    <div className="label-mono mb-2">your new relic</div>
+                    <code className="block break-all font-mono text-sm text-ink">{newRelic}</code>
+                  </div>
+                  <div className="mt-3 flex gap-2">
+                    <button
+                      onClick={copyRelic}
+                      className="rounded-sm bg-primary px-4 py-2 text-sm font-medium text-primary-foreground transition-opacity hover:opacity-90"
+                    >
+                      {relicCopied ? "✓ copied" : "Copy relic"}
+                    </button>
+                    <button
+                      onClick={() => setNewRelic(null)}
+                      className="rounded-sm border border-border px-4 py-2 text-sm text-ink transition-colors hover:bg-secondary"
+                    >
+                      I&apos;ve saved it
+                    </button>
+                  </div>
+                  <p className="mt-2 font-serif text-xs text-muted-foreground">
+                    Store it in a password manager. Anyone with this relic can open your vault.
+                  </p>
+                </div>
+              ) : (
+                <button
+                  onClick={backupRelic}
+                  disabled={relicBusy}
+                  className="mt-4 rounded-sm bg-primary px-4 py-2 text-sm font-medium text-primary-foreground transition-opacity hover:opacity-90 disabled:opacity-50"
+                >
+                  {relicBusy ? "Forging…" : "Forge a new relic"}
+                </button>
+              )}
+            </div>
+
+            {/* Delete account */}
+            <div className="mt-5 rounded-md border border-destructive/40 bg-destructive/5 p-5">
+              <div className="font-display text-base font-semibold text-destructive">Delete account</div>
+              <p className="mt-1 font-serif text-sm text-muted-foreground">
+                This permanently removes your account, your pieces, and your activity.
+                Your custodial wallet key is destroyed with it - move out any balance
+                first. This cannot be undone.
+              </p>
+              <div className="mt-4 flex flex-col gap-2 sm:flex-row sm:items-center">
+                <input
+                  value={confirmText}
+                  onChange={(e) => setConfirmText(e.target.value)}
+                  placeholder="Type DELETE to confirm"
+                  className="min-w-0 flex-1 rounded-sm border border-border bg-card px-3 py-2 text-sm text-ink outline-none placeholder:text-muted-foreground focus:border-destructive"
+                />
+                <button
+                  onClick={removeAccount}
+                  disabled={deleteBusy || confirmText.trim().toUpperCase() !== "DELETE"}
+                  className="shrink-0 rounded-sm bg-destructive px-4 py-2 text-sm font-medium text-white transition-opacity hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50"
+                >
+                  {deleteBusy ? "Deleting…" : "Delete my account"}
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
         {tab === "support" && (
           <div>
             <h2 className="font-display text-xl font-semibold text-ink">Support</h2>
@@ -222,8 +342,8 @@ export function SettingsClient({
                 <p className="mt-1 font-serif text-sm text-muted-foreground">Ask questions and meet other writers and readers.</p>
               </li>
               <li className="rounded-md border border-border bg-card p-4">
-                <div className="font-display text-base font-semibold text-ink">Lost your relic?</div>
-                <p className="mt-1 font-serif text-sm text-muted-foreground">The relic is the only key to your vault. It cannot be recovered. Keep it somewhere safe; email backup is on the roadmap.</p>
+                <button onClick={() => setTab("security")} className="font-display text-base font-semibold text-ink hover:text-primary">Back up your relic →</button>
+                <p className="mt-1 font-serif text-sm text-muted-foreground">The relic is the only key to your vault and cannot be recovered if lost. Forge a fresh backup any time under Security.</p>
               </li>
             </ul>
           </div>

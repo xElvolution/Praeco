@@ -22,6 +22,27 @@ export const metadata: Metadata = {
   title: "Praeco · paid for every retelling",
   description:
     "A per-read nanopayment toll booth for creators, settled in USDC on Arc. The crier is paid each time the work is carried.",
+  icons: {
+    icon: "/icon.png",
+    apple: "/apple-icon.png",
+  },
+  openGraph: {
+    title: "Praeco · paid by the read, not the month",
+    description:
+      "Sell an article for a cent, paid instantly in USDC on Arc. No subscription, no floor. The lepton, reborn.",
+    url: defaultUrl,
+    siteName: "Praeco",
+    images: [{ url: "/og.png", width: 1200, height: 630, alt: "Praeco" }],
+    type: "website",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "Praeco · paid by the read, not the month",
+    description:
+      "Sell an article for a cent, paid instantly in USDC on Arc. No subscription, no floor.",
+    images: ["/og.png"],
+    site: "@heypraeco",
+  },
 };
 
 const fraunces = Fraunces({

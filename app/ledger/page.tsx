@@ -5,6 +5,7 @@
  */
 import Link from "next/link";
 import { Nav } from "@/components/site/nav";
+import { SiteFooter } from "@/components/site/footer";
 import { LedgerView } from "@/components/ledger/ledger-view";
 import { listReads, ledgerTotals, leaderboard } from "@/lib/data";
 import { currentUser } from "@/lib/auth";
@@ -38,6 +39,7 @@ export default async function LedgerPage() {
           <LedgerView census={census} reads={reads} totals={totals} viewer={viewer?.username ?? null} />
         </div>
       </section>
+      <SiteFooter />
     </div>
   );
 }

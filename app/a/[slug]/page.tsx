@@ -8,6 +8,7 @@ import { Nav } from "@/components/site/nav";
 import { ReadGate } from "@/components/reader/read-gate";
 import { LikeButton } from "@/components/reader/like-button";
 import { Wreath } from "@/components/identity/wreath";
+import { Markdown } from "@/components/reader/markdown";
 import { getArticleBySlug, likeState } from "@/lib/data";
 import { currentUser } from "@/lib/auth";
 
@@ -24,6 +25,7 @@ export default async function ArticlePage({
 
   const viewer = await currentUser();
   const likes = await likeState(viewer?.id ?? null, article.id);
+  const isOwner = !!viewer && viewer.id === article.creator_id;
 
   return (
     <div className="min-h-screen">
@@ -54,9 +56,23 @@ export default async function ArticlePage({
           {article.preview}
         </p>
 
-        <div className="mt-10">
-          <ReadGate articleId={article.id} price={article.price_usdc} />
-        </div>
+        {isOwner ? (
+          <div className="mt-10">
+            <div className="mb-8 flex items-center gap-3 rounded-md border border-patina/30 bg-patina/5 px-4 py-3">
+              <span className="text-lg">⊙</span>
+              <p className="font-mono text-xs text-patina">
+                Your piece. You read it free - readers pay {article.price_usdc} USDC to unlock it.
+              </p>
+            </div>
+            <article>
+              <Markdown>{article.body}</Markdown>
+            </article>
+          </div>
+        ) : (
+          <div className="mt-10">
+            <ReadGate articleId={article.id} price={article.price_usdc} />
+          </div>
+        )}
       </article>
     </div>
   );

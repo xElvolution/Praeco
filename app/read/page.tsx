@@ -6,6 +6,7 @@
  */
 import Link from "next/link";
 import { Nav } from "@/components/site/nav";
+import { SiteFooter } from "@/components/site/footer";
 import { listArticles, type Article } from "@/lib/data";
 import { currentUser } from "@/lib/auth";
 import { topicLabel } from "@/lib/topics";
@@ -67,6 +68,7 @@ export default async function ReadIndex() {
           </>
         )}
       </section>
+      <SiteFooter />
     </div>
   );
 }

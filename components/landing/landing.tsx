@@ -15,6 +15,7 @@ import { LedgerFeed } from "@/components/ledger/ledger-feed";
 import { ScrollFX } from "@/components/animations/scroll-fx";
 import { Nav } from "@/components/site/nav";
 import { ScrollRelics } from "@/components/site/scroll-relics";
+import { SiteFooter } from "@/components/site/footer";
 
 type Article = {
   id: string;
@@ -226,12 +227,7 @@ export function Landing({
         </section>
 
         {/* Footer */}
-        <footer data-relic="forum" className="rule mx-auto max-w-5xl px-6 py-12">
-          <div className="flex flex-wrap items-baseline justify-between gap-4">
-            <span className="font-display text-2xl font-semibold text-ink">Praeco</span>
-            <span className="label-mono">⊙ the crier is paid for every retelling · settled on Arc</span>
-          </div>
-        </footer>
+        <SiteFooter />
       </div>
     </SmoothScroll>
   );
